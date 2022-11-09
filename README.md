@@ -1,8 +1,10 @@
-一、下载配置文件
-  # wget   https://kuboard.cn/install-script/kuboard.yaml
+**一、下载配置文件**
 
-二、修改配置
-  # vim kuboard.yaml
+    # wget  https://kuboard.cn/install-script/kuboard.yaml
+
+**二、修改配置**
+    
+    # vim kuboard.yaml
     ..........
         spec:
           containers:
@@ -17,9 +19,11 @@
               hostPath:
                 path: /data/kuboard-data
     ..........
-# kubectl apply -f kuboard.yaml
+    
+    # kubectl apply -f kuboard.yaml
 
-三、配置支持 HTTPS
+**三、配置支持 HTTPS**
+
 	1、创建 CA 证书
 		# openssl req -x509 -sha256 -newkey rsa:4096 -keyout ca.key -out ca.crt -days 356 -nodes -subj '/CN=kuboard.com'
 		
