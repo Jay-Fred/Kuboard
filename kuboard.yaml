@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kuboard
+  namespace: kube-system
+  annotations:
+    k8s.kuboard.cn/displayName: kuboard
+    k8s.kuboard.cn/ingress: "true"
+    k8s.kuboard.cn/service: NodePort
+    k8s.kuboard.cn/workload: kuboard
+  labels:
+    k8s.kuboard.cn/layer: monitor
+    k8s.kuboard.cn/name: kuboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s.kuboard.cn/layer: monitor
+      k8s.kuboard.cn/name: kuboard
+  template:
+    metadata:
+      labels:
+        k8s.kuboard.cn/layer: monitor
+        k8s.kuboard.cn/name: kuboard
+    spec:
+      nodeSelector:
+        zone: master
+      containers:
+      - name: kuboard
+        image: eipwork/kuboard:v3
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: KUBOARD_TLS_CERT
+            value: "/etc/certs/kuboard.com/server.crt"
+          - name: KUBOARD_TLS_KEY
+            value: "/etc/certs/kuboard.com/server.key"
+          - name: KUBOARD_ENDPOINT
+            value: "https://kuboard.com"
+          - name: KUBOARD_AGENT_SERVER_UDP_PORT
+            value: "10081"
+          - name: KUBOARD_AGENT_SERVER_TCP_PORT
+            value: "10081"
+        volumeMounts:
+          - mountPath: /data
+            name: data
+          - mountPath: /etc/certs/kuboard.com/server.crt
+            name: server-crt
+          - mountPath: /etc/certs/kuboard.com/server.key
+            name: server-key
+      volumes:
+        - name: data
+          hostPath:
+            path: /data/kuboard-data
+        - name: server-crt
+          hostPath:
+            path: /root/kuboard/tls/server.crt
+        - name: server-key
+          hostPath:
+            path: /root/kuboard/tls/server.key
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kuboard
+  namespace: kube-system
+spec:
+  ports:
+    - port: 80
+      name: http
+      targetPort: 80
+    - port: 443
+      name: https
+      targetPort: 443
+    - port: 10081
+      name: udp
+      targetPort: 10081
+
+  selector:
+    k8s.kuboard.cn/layer: monitor
+    k8s.kuboard.cn/name: kuboard
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kuboard-user
+  namespace: kube-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kuboard-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: kuboard-user
+  namespace: kube-system
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kuboard-viewer
+  namespace: kube-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kuboard-viewer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+- kind: ServiceAccount
+  name: kuboard-viewer
+  namespace: kube-system
+
