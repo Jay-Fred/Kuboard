@@ -18,6 +18,7 @@
                 path: /data/kuboard-data
     ..........
 # kubectl apply -f kuboard.yaml
+
 三、配置支持 HTTPS
 	1、创建 CA 证书
 		# openssl req -x509 -sha256 -newkey rsa:4096 -keyout ca.key -out ca.crt -days 356 -nodes -subj '/CN=kuboard.com'
@@ -65,7 +66,6 @@
 			        - name: server-key
 			          hostPath:
 			            path: /root/kuboard/tls/server.key
----
 			
 	7、访问
             https://kuboard.com:30443/kuboard/cluster
